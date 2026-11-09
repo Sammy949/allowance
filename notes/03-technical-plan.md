@@ -1,6 +1,6 @@
 # Technical plan
 
-Status: draft, awaiting approval.
+Status: approved 2026-11-09. M0 done except cold start, which moves to M2.
 
 Goal: click tray icon, drawer shows Claude plan usage, refresh fetches fresh numbers.
 
@@ -38,7 +38,23 @@ Label-agnostic, one match per line, so new per-model lines appear without a code
 
 `^(?<label>.+?): (?<pct>\d+)% used · resets (?<when>.+?) \((?<tz>[^)]+)\)$`
 
-If nothing matches: keep last good numbers, mark them stale, show the error.
+If nothing matches: keep last good numbers, mark them stale, show the error. A successful exit is not enough, because logged-out runs also exit 0.
+
+`when` must accept both `4:50am` and `7pm`.
+
+## Drawer layout (matches claude.ai's usage page)
+
+- Heading "Plan usage limits", plan name beside it in muted text if the CLI can supply it.
+- "Current session" row: label, "Resets at 4:50 AM" below it in muted text, blue bar, "27% used" on the right.
+- Heading "Weekly limits", then an "All models" row in the same form, with "Resets Fri 7:00 PM".
+- Reset text: time only for today, weekday and time otherwise.
+- Added beyond claude.ai: refresh button and "Updated N min ago".
+- Left out: the "Learn more" link.
+- Narrower than the web page, so the bar may sit below the label if the side-by-side row feels cramped.
+
+## Tray icon
+
+Shows both numbers, session above weekly. Legibility at 100% scaling is unproven, so check it first in M3.
 
 ## When it fetches
 
