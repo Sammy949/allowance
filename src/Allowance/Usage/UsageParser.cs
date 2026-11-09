@@ -18,6 +18,12 @@ public static partial class UsageParser
     [GeneratedRegex(@"^Current week \((?<scope>.+)\)$", RegexOptions.IgnoreCase)]
     private static partial Regex WeeklyLabel();
 
+    [GeneratedRegex(@"^\s*(?<title>Last \w+)\W+(?<meta>\d.*)$", RegexOptions.IgnoreCase)]
+    private static partial Regex PeriodLine();
+
+    [GeneratedRegex(@"^\s*(?<pct>\d{1,3})%\s+(?<text>\S.*)$")]
+    private static partial Regex BreakdownLine();
+
     /// <summary>Classifies a finished CLI run. A logged-out run also exits 0, so success requires actual usage lines.</summary>
     public static UsageResult Classify(int exitCode, string stdout, string stderr, DateTimeOffset now)
     {
@@ -36,7 +42,7 @@ public static partial class UsageParser
         var rows = ParseText(text, now);
         if (rows.Count > 0)
         {
-            return new UsageResult(new UsageSnapshot(rows, now), UsageFailure.None);
+            return new UsageResult(new UsageSnapshot(rows, now, ParseBreakdown(text)), UsageFailure.None);
         }
 
         var signedOut = text.Contains("Total cost:", StringComparison.OrdinalIgnoreCase)
@@ -96,6 +102,40 @@ public static partial class UsageParser
         }
 
         return rows;
+    }
+
+    /// <summary>The CLI's "what's contributing" section, or null if it isn't there. Never fails the fetch.</summary>
+    public static UsageBreakdown? ParseBreakdown(string text)
+    {
+        string? note = null;
+        var periods = new List<BreakdownPeriod>();
+        List<BreakdownItem>? items = null;
+        List<string>? tops = null;
+        foreach (var raw in text.Split('\n'))
+        {
+            var line = raw.Trim();
+            var period = PeriodLine().Match(line);
+            if (period.Success)
+            {
+                items = [];
+                tops = [];
+                periods.Add(new BreakdownPeriod(period.Groups["title"].Value, period.Groups["meta"].Value, items, tops));
+            }
+            else if (line.StartsWith("Approximate", StringComparison.OrdinalIgnoreCase))
+            {
+                note = line;
+            }
+            else if (items is not null && BreakdownLine().Match(line) is { Success: true } item)
+            {
+                items.Add(new BreakdownItem(int.Parse(item.Groups["pct"].Value, CultureInfo.InvariantCulture), item.Groups["text"].Value));
+            }
+            else if (tops is not null && line.StartsWith("Top ", StringComparison.OrdinalIgnoreCase))
+            {
+                tops.Add(line);
+            }
+        }
+
+        return periods.Count > 0 ? new UsageBreakdown(note, periods) : null;
     }
 
     /// <summary>Parses "Nov 9, 4:50am" or "7pm" in the CLI's zone. The CLI omits the year, so pick the nearest sensible one.</summary>

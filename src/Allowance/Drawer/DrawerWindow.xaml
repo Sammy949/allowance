@@ -88,6 +88,31 @@
                         Text="Weekly limits"
                         Visibility="Collapsed" />
                     <StackPanel x:Name="WeeklyRows" Spacing="16" />
+                    <StackPanel x:Name="BreakdownPanel" Spacing="8" Visibility="Collapsed">
+                        <Button
+                            x:Name="BreakdownToggle"
+                            Margin="-8,0,-8,0"
+                            Padding="8,6"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Stretch"
+                            AutomationProperties.Name="Show what's using your allowance"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Click="OnBreakdownClick">
+                            <Grid>
+                                <TextBlock FontSize="14" Text="What's using your allowance" />
+                                <FontIcon
+                                    x:Name="BreakdownChevron"
+                                    HorizontalAlignment="Right"
+                                    FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                    FontSize="12"
+                                    Glyph="&#xE70D;" />
+                            </Grid>
+                        </Button>
+                        <ScrollViewer x:Name="BreakdownScroll" MaxHeight="320" Visibility="Collapsed">
+                            <StackPanel x:Name="BreakdownBody" Padding="0,0,12,0" Spacing="14" />
+                        </ScrollViewer>
+                    </StackPanel>
                     <TextBlock
                         x:Name="MessageText"
                         AutomationProperties.LiveSetting="Assertive"

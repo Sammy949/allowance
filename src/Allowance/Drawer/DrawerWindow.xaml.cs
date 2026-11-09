@@ -4,7 +4,9 @@ using Allowance.Usage;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Windows.Foundation;
@@ -27,6 +29,7 @@ public sealed partial class DrawerWindow : WindowEx
     private readonly UISettings _uiSettings = new();
     private readonly List<UsageRowView> _rowViews = [];
     private string _rowKey = string.Empty;
+    private UsageBreakdown? _shownBreakdown;
     private POINT _anchor;
     private bool _open;
     private long _closedAt;
@@ -123,11 +126,70 @@ public sealed partial class DrawerWindow : WindowEx
 
     private void OnRefreshClick(object sender, RoutedEventArgs e) => _ = _store.RefreshAsync();
 
+    private void OnBreakdownClick(object sender, RoutedEventArgs e)
+    {
+        var expanded = BreakdownScroll.Visibility != Visibility.Visible;
+        BreakdownScroll.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
+        BreakdownChevron.Glyph = expanded ? "\uE70E" : "\uE70D";
+        AutomationProperties.SetName(BreakdownToggle, (expanded ? "Hide" : "Show") + " what's using your allowance");
+        Reposition();
+    }
+
+    private void RenderBreakdown(UsageBreakdown? breakdown)
+    {
+        BreakdownPanel.Visibility = breakdown is null ? Visibility.Collapsed : Visibility.Visible;
+        if (ReferenceEquals(breakdown, _shownBreakdown))
+        {
+            return;
+        }
+
+        _shownBreakdown = breakdown;
+        BreakdownBody.Children.Clear();
+        if (breakdown is null)
+        {
+            return;
+        }
+
+        var muted = (Style)Application.Current.Resources["AllowanceMutedText"];
+        foreach (var period in breakdown.Periods)
+        {
+            var group = new StackPanel { Spacing = 4 };
+            var title = new TextBlock { FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap };
+            title.Inlines.Add(new Run { Text = period.Title });
+            group.Children.Add(title);
+            group.Children.Add(new TextBlock { Text = period.Meta, Style = muted, TextWrapping = TextWrapping.Wrap });
+            foreach (var item in period.Items)
+            {
+                var row = new Grid { ColumnSpacing = 8 };
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(38) });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                row.Children.Add(new TextBlock { Text = $"{item.Percent}%", Style = muted, TextAlignment = TextAlignment.Right });
+                var text = new TextBlock { Text = item.Text, FontSize = 12, TextWrapping = TextWrapping.Wrap };
+                Grid.SetColumn(text, 1);
+                row.Children.Add(text);
+                group.Children.Add(row);
+            }
+
+            foreach (var top in period.Tops)
+            {
+                group.Children.Add(new TextBlock { Text = top, Style = muted, TextWrapping = TextWrapping.Wrap });
+            }
+
+            BreakdownBody.Children.Add(group);
+        }
+
+        if (breakdown.Note is { } note)
+        {
+            BreakdownBody.Children.Add(new TextBlock { Text = note, Style = muted, TextWrapping = TextWrapping.Wrap });
+        }
+    }
+
     private void Render()
     {
         var snapshot = _store.Snapshot;
         var now = DateTimeOffset.Now;
         RenderRows(snapshot, now);
+        RenderBreakdown(snapshot?.Breakdown);
 
         PlanText.Text = _store.Plan ?? string.Empty;
         UpdatedText.Text = _store.IsFetching ? "Updating" : snapshot is null ? string.Empty : UsageText.Updated(snapshot.FetchedAt, now);

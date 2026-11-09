@@ -15,5 +15,6 @@
     <Compile Include="..\..\src\Allowance\Usage\UsageModel.cs" Link="Usage\UsageModel.cs" />
     <Compile Include="..\..\src\Allowance\Usage\UsageParser.cs" Link="Usage\UsageParser.cs" />
     <Compile Include="..\..\src\Allowance\Usage\UsageText.cs" Link="Usage\UsageText.cs" />
+    <Compile Include="..\..\src\Allowance\Usage\UsageInsights.cs" Link="Usage\UsageInsights.cs" />
   </ItemGroup>
 </Project>

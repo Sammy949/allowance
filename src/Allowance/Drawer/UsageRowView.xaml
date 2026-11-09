@@ -18,9 +18,9 @@
                 TextTrimming="CharacterEllipsis" />
         </StackPanel>
 
+        <Grid x:Name="BarArea" Grid.Column="1" VerticalAlignment="Center" Background="Transparent">
         <ProgressBar
             x:Name="Bar"
-            Grid.Column="1"
             MinHeight="8"
             VerticalAlignment="Center"
             Background="#402F7FE0"
@@ -32,6 +32,22 @@
                 <x:Double x:Key="ProgressBarTrackHeight">8</x:Double>
             </ProgressBar.Resources>
         </ProgressBar>
+            <!--  The tick marks how much of the window has passed. A bar past the tick is burning faster than time.  -->
+            <Grid x:Name="PaceLayer" IsHitTestVisible="False" Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="PaceDone" Width="*" />
+                    <ColumnDefinition x:Name="PaceLeft" Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border
+                    Grid.Column="1"
+                    Width="2"
+                    Height="16"
+                    Margin="-1,0,0,0"
+                    HorizontalAlignment="Left"
+                    Background="{ThemeResource TextFillColorPrimaryBrush}"
+                    CornerRadius="1" />
+            </Grid>
+        </Grid>
 
         <TextBlock
             x:Name="PercentText"

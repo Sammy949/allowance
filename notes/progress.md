@@ -39,4 +39,11 @@
 - Four logo concepts in `design/logo/`: level, coin, pocket, seven. A coin-in-slot concept was dropped because it read as a hat at small sizes.
 - Feature ideas in `04-feature-ideas.md`.
 
-Next: pick a logo, then pick features.
+## 2026-11-09: v1.0.0
+
+- Logo chosen: Seven, now `design/logo/allowance.svg` and the app icon.
+- Added the pace tick, refill notification (windows at 80% or more) and the usage breakdown.
+- 40 tests pass. The tick, breakdown expand and collapse, and a real refill notification were driven in the real app.
+- Installed per user with a Start menu shortcut through `tools/install.ps1`.
+
+Next: real-use feedback.

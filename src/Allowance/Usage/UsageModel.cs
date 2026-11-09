@@ -8,7 +8,13 @@ public enum UsageSection
 
 public sealed record UsageRow(UsageSection Section, string Label, int Percent, DateTimeOffset? ResetsAt);
 
-public sealed record UsageSnapshot(IReadOnlyList<UsageRow> Rows, DateTimeOffset FetchedAt);
+public sealed record UsageSnapshot(IReadOnlyList<UsageRow> Rows, DateTimeOffset FetchedAt, UsageBreakdown? Breakdown = null);
+
+public sealed record BreakdownItem(int Percent, string Text);
+
+public sealed record BreakdownPeriod(string Title, string Meta, IReadOnlyList<BreakdownItem> Items, IReadOnlyList<string> Tops);
+
+public sealed record UsageBreakdown(string? Note, IReadOnlyList<BreakdownPeriod> Periods);
 
 public enum UsageFailure
 {

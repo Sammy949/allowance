@@ -15,6 +15,9 @@ public partial class App : Application
     private DrawerWindow? _drawer;
     private NotifyIcon? _icon;
     private UsageStore? _store;
+    private Timer? _refillClock;
+    private UsageSnapshot? _observed;
+    private readonly RefillTracker _refills = new();
 
     public App()
     {
@@ -67,6 +70,10 @@ public partial class App : Application
         icon.StartupToggled += ToggleStartup;
         icon.QuitRequested += () => ui.TryEnqueue(Quit);
         store.Changed += UpdateIcon;
+        store.Changed += ObserveRefills;
+        Notifier.Register();
+        ObserveRefills();
+        _refillClock = new Timer(_ => CheckRefills(), null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
         UpdateIcon();
         icon.Start();
 
@@ -92,6 +99,37 @@ public partial class App : Application
     {
         var index = Array.IndexOf(argv, name);
         return index >= 0 && index + 1 < argv.Length ? argv[index + 1] : null;
+    }
+
+    private void ObserveRefills()
+    {
+        lock (_refills)
+        {
+            var snapshot = _store!.Snapshot;
+            if (snapshot is null || ReferenceEquals(snapshot, _observed))
+            {
+                return;
+            }
+
+            _observed = snapshot;
+            foreach (var refill in _refills.Observe(snapshot.Rows, DateTimeOffset.Now))
+            {
+                Notifier.Show(refill.Title, refill.Body);
+            }
+        }
+    }
+
+    private void CheckRefills()
+    {
+        lock (_refills)
+        {
+            if (!_refills.ShouldFetch(DateTimeOffset.Now))
+            {
+                return;
+            }
+        }
+
+        _ = _store!.RefreshAsync();
     }
 
     private void UpdateIcon()

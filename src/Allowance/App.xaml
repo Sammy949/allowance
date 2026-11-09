@@ -9,6 +9,11 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
 
+            <Style x:Key="AllowanceMutedText" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            </Style>
+
             <!--  Spare Hand's card: radius 8, surface-coloured stroke, ThemeShadow, always-active Desktop Acrylic.  -->
             <Style x:Key="AllowanceCard" TargetType="ContentControl">
                 <Setter Property="BorderBrush" Value="{ThemeResource SurfaceStrokeColorDefaultBrush}" />
