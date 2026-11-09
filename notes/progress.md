@@ -47,4 +47,9 @@
 - Tray shows the logo by default, with a menu option for the two numbers.
 - Released from GitHub Actions as an installer.
 
-Next: real-use feedback.
+## 2026-11-09: v1.0.1
+
+- Release builds are trimmed: 171 MB installed down to 92 MB. Drawer, menu, refill notification and live data were re-run on the trimmed build.
+- Rust rewrite planned in `05-rust-rewrite.md`.
+
+Next: Rust spike.
