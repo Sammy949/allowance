@@ -7,8 +7,15 @@ A small Windows tray tool. Click the icon and a drawer shows how much of your Cl
 - A notification when a window you'd nearly used up refills
 - What's been using your allowance, from Claude Code's own breakdown
 - Refresh on demand
+- The logo in your tray, or your two percentages if you prefer (right-click to switch)
 
 Allowance is an independent personal tool. It isn't made by or affiliated with Anthropic.
+
+## Install
+
+**[Download Allowance-Setup.exe](https://github.com/Sammy949/allowance/releases/latest/download/Allowance-Setup.exe)** and run it. No admin rights needed.
+
+It isn't code-signed, so Windows SmartScreen will ask first. Click **More info**, then **Run anyway**.
 
 ## Requirements
 
@@ -25,6 +32,6 @@ tools/test.sh
 tools/build.sh
 ```
 
-To install for your user, publish to `publish/` and run `tools/install.ps1`.
+Pushing a tag like `v1.0.1` builds the installer on GitHub and publishes a release.
 
 Working notes are in [`notes/`](notes/).

@@ -4,7 +4,7 @@ using Microsoft.Win32;
 namespace Allowance.Shell;
 
 /// <summary>
-/// The notification-area icon: left-click toggles the drawer, right-click shows a native menu. Runs on its own thread
+/// The notification-area icon, the logo or the two percentages: left-click toggles the drawer, right-click shows a native menu. Runs on its own thread
 /// with a message-only window, and re-adds itself when Explorer restarts.
 /// </summary>
 internal sealed class NotifyIcon
@@ -13,7 +13,7 @@ internal sealed class NotifyIcon
     private const uint WM_SETTINGCHANGE = 0x001A, WM_DPICHANGED = 0x02E0, WM_CLOSE = 0x0010, WM_DESTROY = 0x0002;
     private const uint NIM_ADD = 0, NIM_MODIFY = 1, NIM_DELETE = 2, NIM_SETVERSION = 4;
     private const uint NIF_MESSAGE = 0x1, NIF_ICON = 0x2, NIF_TIP = 0x4, NIF_SHOWTIP = 0x80;
-    private const int CmdOpen = 1, CmdRefresh = 2, CmdStartup = 3, CmdQuit = 4;
+    private const int CmdOpen = 1, CmdRefresh = 2, CmdStartup = 3, CmdQuit = 4, CmdNumbers = 5;
     private const string WindowClass = "AllowanceNotifyIcon";
 
     // Static so the delegate Windows holds can never be collected.
@@ -21,19 +21,26 @@ internal sealed class NotifyIcon
     private static NotifyIcon? _instance;
 
     private readonly Func<bool> _startsWithWindows;
+    private readonly Func<bool> _showNumbers;
     private nint _hwnd;
     private nint _icon;
     private uint _taskbarCreated;
     private volatile string _tip = "Allowance";
     private int? _session, _weekly;
 
-    public NotifyIcon(Func<bool> startsWithWindows) => _startsWithWindows = startsWithWindows;
+    public NotifyIcon(Func<bool> startsWithWindows, Func<bool> showNumbers)
+    {
+        _startsWithWindows = startsWithWindows;
+        _showNumbers = showNumbers;
+    }
 
     public event Action? OpenRequested;
 
     public event Action? RefreshRequested;
 
     public event Action? StartupToggled;
+
+    public event Action? NumbersToggled;
 
     public event Action? QuitRequested;
 
@@ -186,6 +193,7 @@ internal sealed class NotifyIcon
         AppendMenu(menu, 0, CmdOpen, "Open");
         AppendMenu(menu, 0, CmdRefresh, "Refresh");
         AppendMenu(menu, 0x800 /* MF_SEPARATOR */, 0, null);
+        AppendMenu(menu, _showNumbers() ? 0x8u /* MF_CHECKED */ : 0, CmdNumbers, "Show numbers in tray");
         AppendMenu(menu, _startsWithWindows() ? 0x8u /* MF_CHECKED */ : 0, CmdStartup, "Start with Windows");
         AppendMenu(menu, 0x800, 0, null);
         AppendMenu(menu, 0, CmdQuit, "Quit Allowance");
@@ -201,6 +209,7 @@ internal sealed class NotifyIcon
             case CmdOpen: OpenRequested?.Invoke(); break;
             case CmdRefresh: RefreshRequested?.Invoke(); break;
             case CmdStartup: StartupToggled?.Invoke(); break;
+            case CmdNumbers: NumbersToggled?.Invoke(); break;
             case CmdQuit: QuitRequested?.Invoke(); break;
         }
     }
@@ -208,6 +217,21 @@ internal sealed class NotifyIcon
     private nint RenderIcon()
     {
         var size = GetSystemMetricsForDpi(49 /* SM_CXSMICON */, GetDpiForSystem());
+        if (!_showNumbers())
+        {
+            var path = Path.Combine(AppContext.BaseDirectory, "Assets", "Allowance.ico");
+            var logo = LoadImage(0, path, 1 /* IMAGE_ICON */, size, size, 0x10 /* LR_LOADFROMFILE */);
+            Log.Write($"tray icon: logo at {size}px, loaded={logo != 0}");
+            if (logo != 0)
+            {
+                return logo;
+            }
+        }
+        else
+        {
+            Log.Write($"tray icon: numbers at {size}px");
+        }
+
         using var bitmap = TrayNumberIcon.Render(_session, _weekly, size, TaskbarIsLight());
         return bitmap.GetHicon();
     }
@@ -274,6 +298,7 @@ internal sealed class NotifyIcon
     [DllImport("user32.dll")] private static extern bool DestroyMenu(nint menu);
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint hwnd);
     [DllImport("user32.dll")] private static extern bool DestroyIcon(nint icon);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern nint LoadImage(nint inst, string name, uint type, int cx, int cy, uint load);
     [DllImport("user32.dll")] private static extern uint GetDpiForSystem();
     [DllImport("user32.dll")] private static extern int GetSystemMetricsForDpi(int index, uint dpi);
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] private static extern nint GetModuleHandle(string? name);

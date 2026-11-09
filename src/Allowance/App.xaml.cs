@@ -10,6 +10,7 @@ public partial class App : Application
 {
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
 
+    private static readonly string NumbersFlag = AppPaths.File("tray-numbers");
     private static Mutex? _singleInstance;
     private static EventWaitHandle? _openSignal;
     private DrawerWindow? _drawer;
@@ -64,10 +65,11 @@ public partial class App : Application
         }
 
         var ui = drawer.DispatcherQueue;
-        var icon = _icon = new NotifyIcon(StartsWithWindows);
+        var icon = _icon = new NotifyIcon(StartsWithWindows, () => File.Exists(NumbersFlag));
         icon.OpenRequested += () => ui.TryEnqueue(drawer.Toggle);
         icon.RefreshRequested += () => _ = store.RefreshAsync();
         icon.StartupToggled += ToggleStartup;
+        icon.NumbersToggled += ToggleNumbers;
         icon.QuitRequested += () => ui.TryEnqueue(Quit);
         store.Changed += UpdateIcon;
         store.Changed += ObserveRefills;
@@ -141,6 +143,20 @@ public partial class App : Application
             ? "Allowance"
             : $"Session {session?.Percent}% used, weekly {weekly?.Percent}% used\n{UsageText.Updated(snapshot.FetchedAt, DateTimeOffset.Now)}";
         _icon?.Show(session?.Percent, weekly?.Percent, tip);
+    }
+
+    private void ToggleNumbers()
+    {
+        if (File.Exists(NumbersFlag))
+        {
+            File.Delete(NumbersFlag);
+        }
+        else
+        {
+            File.WriteAllText(NumbersFlag, string.Empty);
+        }
+
+        UpdateIcon();
     }
 
     private static bool StartsWithWindows()

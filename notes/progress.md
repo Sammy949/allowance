@@ -44,6 +44,7 @@
 - Logo chosen: Seven, now `design/logo/allowance.svg` and the app icon.
 - Added the pace tick, refill notification (windows at 80% or more) and the usage breakdown.
 - 40 tests pass. The tick, breakdown expand and collapse, and a real refill notification were driven in the real app.
-- Installed per user with a Start menu shortcut through `tools/install.ps1`.
+- Tray shows the logo by default, with a menu option for the two numbers.
+- Released from GitHub Actions as an installer.
 
 Next: real-use feedback.

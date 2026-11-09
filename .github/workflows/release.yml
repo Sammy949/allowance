@@ -1,0 +1,103 @@
+name: release
+
+# Two ways to publish a release:
+#   - push a tag: git tag v1.0.1 && git push origin v1.0.1
+#   - or Actions, release, Run workflow, and type a version like v1.0.1. The tag is created for you.
+# Every push to main is a dry run: tests pass and the installer is built, but nothing is published.
+# The installer keeps the same name, so this link always downloads the newest one:
+#   https://github.com/Sammy949/allowance/releases/latest/download/Allowance-Setup.exe
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, like v1.0.1'
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.version || (startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v0.0.0-dev') }}
+      PUBLISH: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the version
+        shell: pwsh
+        run: |
+          if ($env:TAG -notmatch '^v\d+\.\d+\.\d+([-.][0-9A-Za-z.]+)?$') { throw "Version must look like v1.0.1, got '$env:TAG'" }
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Test
+        shell: pwsh
+        run: |
+          dotnet test tests/Allowance.Tests/Allowance.Tests.csproj -c Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Publish (Release, self-contained, x64)
+        shell: pwsh
+        run: |
+          $version = $env:TAG.TrimStart('v').Split('-')[0]
+          dotnet publish src/Allowance/Allowance.csproj -c Release -r win-x64 --self-contained -p:Platform=x64 "-p:Version=$version" -o publish/Allowance
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      # GitHub's Windows images ship Inno Setup 6.
+      - name: Find Inno Setup
+        shell: pwsh
+        run: |
+          $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue).Source
+          if (-not $iscc) { $iscc = @("${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe", "$env:ProgramFiles\Inno Setup 6\ISCC.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1 }
+          if (-not $iscc) { throw "Inno Setup 6 isn't on this runner image any more" }
+          "ISCC=$iscc" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+
+      - name: Build Allowance-Setup.exe
+        shell: pwsh
+        run: |
+          foreach ($needed in 'Allowance.pri', 'Assets/Allowance.ico', 'Assets/Allowance.png') {
+            if (-not (Test-Path "publish/Allowance/$needed")) { throw "$needed missing from the publish output" }
+          }
+          Remove-Item "publish/Allowance/*.pdb"
+          $version = $env:TAG.TrimStart('v').Split('-')[0]
+          & $env:ISCC /Q "/DAppVersion=$version" "/DSourceDir=$PWD\publish\Allowance" installer/Allowance.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Move-Item installer/out/Allowance-Setup.exe .
+          $hash = (Get-FileHash Allowance-Setup.exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  Allowance-Setup.exe" | Out-File -Encoding ascii Allowance-Setup.exe.sha256
+          "SHA256: $hash"
+          "{0:N1} MB" -f ((Get-Item Allowance-Setup.exe).Length / 1MB)
+
+      - name: Upload installer (dry run)
+        if: env.PUBLISH != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Allowance-Setup-${{ github.sha }}
+          path: Allowance-Setup.exe
+          retention-days: 14
+
+      # Not --prerelease: GitHub's releases/latest link skips pre-releases, and the README download link uses it.
+      - name: Create release
+        if: env.PUBLISH == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $notes = @"
+          **[Download Allowance-Setup.exe](https://github.com/Sammy949/allowance/releases/latest/download/Allowance-Setup.exe)** and run it. No admin rights needed. x64 Windows.
+
+          Needs WSL with Claude Code signed in to a Claude plan. Not code-signed: Windows SmartScreen will ask first. Click **More info**, then **Run anyway**.
+          "@
+          gh release create $env:TAG Allowance-Setup.exe Allowance-Setup.exe.sha256 --target $env:GITHUB_SHA --latest --generate-notes --notes $notes --title "Allowance $env:TAG"
