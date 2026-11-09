@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <RootNamespace>Allowance</RootNamespace>
+    <AssemblyName>Allowance</AssemblyName>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.6901" />
+    <PackageReference Include="WinUIEx" Version="2.8.0" />
+    <PackageReference Include="System.Drawing.Common" Version="10.0.0" />
+
+    <!-- Keep the AI, ML, Widgets and WebView2 runtimes the metapackage brings out of the build. -->
+    <PackageReference Include="Microsoft.WindowsAppSDK.AI" Version="2.2.3" ExcludeAssets="all" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.ML" Version="2.1.70" ExcludeAssets="all" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Widgets" Version="2.0.5" ExcludeAssets="all" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3719.77" ExcludeAssets="all" />
+    <PackageReference Include="Microsoft.Windows.AI.MachineLearning" Version="2.1.70" ExcludeAssets="all" />
+    <PackageReference Include="System.Numerics.Tensors" Version="9.0.0" ExcludeAssets="all" />
+  </ItemGroup>
+  <!-- An unpackaged publish doesn't copy the resource index that carries the compiled XAML. -->
+  <Target Name="PublishProjectPri" AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <ResolvedFileToPublish Include="$(ProjectPriFullPath)" RelativePath="$(ProjectPriFileName)" CopyToPublishDirectory="PreserveNewest" Condition="Exists('$(ProjectPriFullPath)')" />
+    </ItemGroup>
+  </Target>
+</Project>

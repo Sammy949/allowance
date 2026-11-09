@@ -1,0 +1,44 @@
+<UserControl
+    x:Class="Allowance.Drawer.UsageRowView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid ColumnSpacing="16">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="128" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="72" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Spacing="4">
+            <TextBlock x:Name="LabelText" FontSize="14" TextTrimming="CharacterEllipsis" />
+            <TextBlock
+                x:Name="ResetText"
+                FontSize="12"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+
+        <ProgressBar
+            x:Name="Bar"
+            Grid.Column="1"
+            MinHeight="8"
+            VerticalAlignment="Center"
+            Background="#402F7FE0"
+            CornerRadius="4"
+            Foreground="#2F7FE0"
+            Maximum="100"
+            Minimum="0">
+            <ProgressBar.Resources>
+                <x:Double x:Key="ProgressBarTrackHeight">8</x:Double>
+            </ProgressBar.Resources>
+        </ProgressBar>
+
+        <TextBlock
+            x:Name="PercentText"
+            Grid.Column="2"
+            VerticalAlignment="Center"
+            FontSize="13"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            TextAlignment="Right" />
+    </Grid>
+</UserControl>

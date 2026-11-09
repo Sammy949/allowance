@@ -1,6 +1,6 @@
 # Technical plan
 
-Status: approved 2026-11-09. M0 done except cold start, which moves to M2.
+Status: M0 to M3 built 2026-11-09. Open checks are listed at the end of `progress.md`.
 
 Goal: click tray icon, drawer shows Claude plan usage, refresh fetches fresh numbers.
 
