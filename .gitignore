@@ -1,0 +1,11 @@
+# Build output
+bin/
+obj/
+publish/
+*.user
+.vs/
+.vscode/
+
+# Local scratch and captured CLI output (can contain personal usage data)
+scratch/
+*.log
