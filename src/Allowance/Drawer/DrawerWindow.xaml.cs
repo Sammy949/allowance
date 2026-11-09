@@ -187,8 +187,9 @@ public sealed partial class DrawerWindow : WindowEx
         var width = (int)Math.Ceiling(Card.DesiredSize.Width * scale);
         var height = (int)Math.Ceiling(Card.DesiredSize.Height * scale);
 
-        // The window's own transparent margin is the gap from the cursor.
-        var (x, y, _) = Placement.NearCursor(_anchor, width, height, 0);
+        // The window carries a 24 px transparent shadow margin. A negative inset leaves the card 12 px from the edges.
+        var inset = (int)Math.Round(-12 * scale);
+        var (x, y) = Placement.BottomRight(_anchor, width, height, inset);
         AppWindow.MoveAndResize(new Windows.Graphics.RectInt32(x, y, width, height));
     }
 

@@ -33,4 +33,10 @@
 - Cold start with WSL shut down. The fetch timeout is 45 s.
 - 100% and 150% display scaling. Only the current 125% was run. Icon sizes 16, 24 and 32 were rendered to files.
 
-Next: real-use feedback.
+## 2026-11-09: Corner and logos
+
+- Drawer now anchors to the bottom-right of the work area on the cursor's monitor, 12 logical px from the edges.
+- Four logo concepts in `design/logo/`: level, coin, pocket, seven. A coin-in-slot concept was dropped because it read as a hat at small sizes.
+- Feature ideas in `04-feature-ideas.md`.
+
+Next: pick a logo, then pick features.

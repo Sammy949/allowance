@@ -15,6 +15,15 @@ internal static class Placement
         return dpi / 96.0;
     }
 
+    /// <summary>The bottom-right corner of the work area on the cursor's monitor, like Windows' own flyouts.</summary>
+    public static (int X, int Y) BottomRight(POINT cursor, int cardW, int cardH, int inset)
+    {
+        var mon = MonitorFromPoint(cursor, MONITOR_DEFAULTTONEAREST);
+        var mi = new MONITORINFO { cbSize = System.Runtime.InteropServices.Marshal.SizeOf<MONITORINFO>() };
+        GetMonitorInfo(mon, ref mi);
+        return (mi.rcWork.Right - cardW - inset, mi.rcWork.Bottom - cardH - inset);
+    }
+
     public static (int X, int Y, string Side) NearCursor(POINT cursor, int cardW, int cardH, int gap)
     {
         var mon = MonitorFromPoint(cursor, MONITOR_DEFAULTTONEAREST);
